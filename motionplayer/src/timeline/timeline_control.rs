@@ -40,7 +40,6 @@ impl TimelineControlAnimatorState {
     pub fn reset(
         &mut self,
         value: f64,
-        transition: f64,
         ease_weight: f64
     ) {
         self.queue.clear();

@@ -1,12 +1,11 @@
 use slotmap::{SecondaryMap, SlotMap};
-
-use crate::timeline::TimelineKey;
+use crate::timeline::timeline::TimelineKey;
 
 pub struct PlayerState {
     pub flags: PlayerStateFlags,
     pub values: PlayerStateValues,
+    pub animators: AnimatorStates,
     pub frame_eval_results: SlotMap<TimelineKey, f64>,
-    pub animators: AnimatorStates
 }
 
 pub struct PlayerStateFlags {
