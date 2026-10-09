@@ -3,17 +3,26 @@ use slotmap::{SecondaryMap, SlotMap};
 use crate::timeline::TimelineKey;
 
 pub struct PlayerState {
+    pub flags: PlayerStateFlags,
+    pub values: PlayerStateValues,
+    pub frame_eval_results: SlotMap<TimelineKey, f64>,
+    pub animators: AnimatorStates
+}
+
+pub struct PlayerStateFlags {
+    pub emote_dirty: bool,
     pub all_playing: bool,
     pub sync_active: bool,
     pub sync_waiting: bool,
     pub queueing: bool,
+}
+
+pub struct PlayerStateValues {
     pub clamped_eval_time: f64,
     pub loop_time: f64,
     pub frame_tick_count: f64,
     pub frame_loop_time: f64,
     pub frame_last_time: f64,
-    pub frame_eval_results: SlotMap<TimelineKey, f64>,
-    pub animators: AnimatorStates
 }
 
 pub struct AnimatorStates {
@@ -52,6 +61,3 @@ impl AnimatorStates {
     }
 }
 
-pub struct VariableAnimatorState {
-
-}

@@ -1,8 +1,11 @@
 use std::collections::VecDeque;
 
-use slotmap::new_key_type;
+use slotmap::{SecondaryMap, SlotMap, new_key_type};
 
-new_key_type! { pub struct TimelineKey; }
+new_key_type! { 
+    pub struct TimelineControlTrackKey;
+    pub struct TimelineKey; 
+}
 
 /// The state of a timeline.
 pub struct TimelineState {
@@ -19,8 +22,8 @@ pub struct TimelineState {
     pub control_initialized: bool,
     pub control_last_applied_time: f64,
     pub control_frame_cursor: Vec<isize>,
-    pub control_track_values: Vec<f64>,
-    pub control_track_animators: Vec<TimelineControlAnimatorState>,
+    pub control_track_values: SecondaryMap<TimelineControlTrackKey, f64>,
+    pub control_track_animators: SecondaryMap<TimelineControlTrackKey,TimelineControlAnimatorState>,
     pub blend_animator: TimelineControlAnimatorState,
 }
 
@@ -28,7 +31,7 @@ impl TimelineState {
     /// Update the timeline state if there's no corresponding control binding for it.
     /// 
     /// Returns whether to keep playing it.
-    pub fn no_control_binding_update(&mut self, delta: f64) -> bool {
+    pub fn progress_basic(&mut self, delta: f64) -> bool {
         self.current_time += delta;
         if self.total_frames > 0.0 && self.current_time >= self.total_frames {
             if !wrap_timeline(&mut self.current_time, self.total_frames, self.loop_time) {
@@ -37,6 +40,28 @@ impl TimelineState {
             }
         }
         return true;
+    }
+
+    /// Check if to stop playing the timeline.
+    /// 
+    /// If `binding_last_time` is supplied, also checks if we've passed it.
+    /// 
+    /// Sets internal state and returns if stopped.
+    pub fn maybe_stop_playing(&mut self, binding_last_time: Option<f64>) -> bool {
+        let blend_animator_pending = self.blend_animator.active || !self.blend_animator.queue.is_empty();
+        if !(self.blend_auto_stop && !blend_animator_pending) {
+            return true;
+        }
+        if let Some(last_time) = binding_last_time {
+            if last_time <= self.current_time {
+                return true;
+            }
+            else {
+                self.current_time = last_time;
+            }
+        }
+        self.playing = false;
+        return false;
     }
 }
 
@@ -64,21 +89,43 @@ fn wrap_timeline(current_time: &mut f64, total_frames: f64, loop_time: f64) -> b
     return true;
 }
 
+
+pub struct TimelineControlBinding {
+    pub label: String,
+    pub loop_begin: f64,
+    pub loop_end: f64,
+    pub last_time: f64,
+    pub tracks: SlotMap<TimelineControlTrackKey, TimelineControlTrack>
+}
+
+pub struct TimelineControlTrack {
+    pub label: String,
+    pub is_instant_variable: bool,
+    pub frames: Vec<TimelineControlFrame>
+}
+
+pub struct TimelineControlFrame {
+    time: f64,
+    is_type_zero: bool,
+    value: f32,
+    easing_weight: f64
+}
+
 /// The state of an animator within a timeline.
 pub struct TimelineControlAnimatorState {
-    active: bool,
-    current_value: f32,
-    start_value: f32,
-    target_value: f32,
-    progress: f32,
-    duration: f32,
-    weight: f32,
-    queue: VecDeque<TimelineControlKeyframe>
+    pub active: bool,
+    pub current_value: f64,
+    pub start_value: f64,
+    pub target_value: f64,
+    pub progress: f64,
+    pub duration: f64,
+    pub weight: f64,
+    pub queue: VecDeque<TimelineControlKeyframe>
 }
 
 /// A keyframe control?
 pub struct TimelineControlKeyframe {
-    value: f32,
-    duration: f32,
-    weight: f32
+    pub value: f64,
+    pub duration: f64,
+    pub weight: f64
 }

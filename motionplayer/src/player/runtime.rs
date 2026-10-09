@@ -1,6 +1,6 @@
 use slotmap::SlotMap;
 
-use crate::{motion::MotionSnapshot, player::{MotionClip, TimelineControlBinding}, timeline::{TimelineKey, TimelineState}};
+use crate::{motion::{MotionEvent, MotionSnapshot}, player::{MotionClip, TimelineControlBinding}, timeline::{TimelineKey, TimelineState}};
 
 pub struct PlayerRuntime {
     pub active_motion: MotionSnapshot,
@@ -10,9 +10,12 @@ pub struct PlayerRuntime {
 }
 
 impl PlayerRuntime {
+    pub fn push_motion_events(&mut self, events: &mut Vec<MotionEvent>) {
+        todo!()
+    }
+
     pub fn clear_pending_events(&mut self) {
-        // TODO
-        
+        todo!()    
     }
 
     pub fn select_active_clip(&self) -> Option<&MotionClip> {
